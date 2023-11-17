@@ -45,41 +45,40 @@ fn sum_u32(arr: &[u32]) -> Option<u32> {
 trait ShapeCaculate {
     fn area(&self) -> f64;
 }
+
+fn cal_area<T: ShapeCaculate>(shape: T) -> f64 {
+    return shape.area();
+}
 // 定义支持的图形，并使用 Enum 保存
 struct Square {
     length: f64,
     width: f64,
 }
+impl ShapeCaculate for Square {
+    fn area(&self) -> f64 {
+        return self.length * self.width;
+    }
+}
+
 struct Triangle {
     side_a: f64,
     side_b: f64,
     side_c: f64,
 }
 
+impl ShapeCaculate for Triangle {
+    fn area(&self) -> f64 {
+        let s: f64 = (self.side_a + self.side_b + self.side_c) / 2.0;
+        return (s * (s - self.side_a) * (s - self.side_b) * (s - self.side_c)).sqrt();
+    }
+}
+
 struct Circle {
     radius: f64,
 }
-enum Shape {
-    Square(Square),
-    Triangle(Triangle),
-    Circle(Circle),
-}
-
-// 实现Shape 类型的trait
-impl ShapeCaculate for Shape {
+impl ShapeCaculate for Circle {
     fn area(&self) -> f64 {
-        match self {
-            Shape::Square(s) => {
-                return s.length * s.width;
-            }
-            Shape::Triangle(t) => {
-                let s: f64 = (t.side_a + t.side_b + t.side_c) / 2.0;
-                return (s * (s - t.side_a) * (s - t.side_b) * (s - t.side_c)).sqrt();
-            }
-            Shape::Circle(c) => {
-                return std::f64::consts::PI * c.radius * c.radius;
-            }
-        }
+        return std::f64::consts::PI * self.radius * self.radius;
     }
 }
 
@@ -105,18 +104,18 @@ mod tests {
 
     #[test]
     fn test_shape_caculate_area() {
-        let c = Shape::Circle(Circle { radius: 3.0 });
-        assert_eq!(c.area(), 28.274333882308138);
-        let s: Shape = Shape::Square(Square {
+        let c = Circle { radius: 3.0 };
+        assert_eq!(cal_area(c), 28.274333882308138);
+        let s = Square {
             length: (3.0),
             width: (4.0),
-        });
-        assert_eq!(s.area(), 12.0);
-        let t: Shape = Shape::Triangle(Triangle {
+        };
+        assert_eq!(cal_area(s), 12.0);
+        let t = Triangle {
             side_a: (3.0),
             side_b: (4.0),
             side_c: (5.0),
-        });
-        assert_eq!(t.area(), 6.0);
+        };
+        assert_eq!(cal_area(t), 6.0);
     }
 }
