@@ -1,10 +1,6 @@
 use std::cmp::Ordering;
 
-fn main() {
-    // println!("Hello, world!");
-}
-
-fn bubble_sort_i32(nums: &mut [i32]) {
+pub fn bubble_sort_i32(nums: &mut [i32]) {
     if nums.len() < 2 {
         return;
     }
@@ -22,7 +18,7 @@ fn bubble_sort_i32(nums: &mut [i32]) {
     return;
 }
 
-fn bubble_sort<T: std::cmp::PartialOrd>(nums: &mut [T]) {
+pub fn bubble_sort<T: std::cmp::PartialOrd>(nums: &mut [T]) {
     if nums.len() < 2 {
         return;
     }
