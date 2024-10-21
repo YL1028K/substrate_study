@@ -37,6 +37,7 @@ pub mod pallet {
     #[pallet::generate_deposit(pub(super) fn deposit_event)]
     pub enum Event<T: Config> {
         ClaimCreated(T::AccountId, BoundedVec<u8, T::MaxClaimLength>),
+        ClaimRevoked(T::AccountId, BoundedVec<u8, T::MaxClaimLength>),
     }
     #[pallet::error]
     pub enum Error<T> {
@@ -47,6 +48,7 @@ pub mod pallet {
 
     #[pallet::call]
     impl<T: Config> Pallet<T> {
+        // 创建存证
         #[pallet::call_index(0)]
         #[pallet::weight(T::WeightInfo::create_claim())]
         pub fn create_claim(
@@ -66,6 +68,46 @@ pub mod pallet {
             );
             Self::deposit_event(Event::ClaimCreated(sender, claim.into()));
             Ok(())
+        }
+
+        // 吊销存证
+        #[pallet::call_index(1)]
+        #[pallet::weight(T::WeightInfo::revoke_claim())]
+        pub fn revoke_claim(
+            origin: OriginFor<T>,
+            claim: BoundedVec<u8, T::MaxClaimLength>,
+        ) -> DispatchResult {
+            // 调用签名验证
+            let sender = ensure_signed(origin)?;
+            let (owner, _) = Proofs::<T>::get(&claim).ok_or(Error::<T>::ClaimNotExist)?;
+            ensure!(owner == sender, Error::<T>::NotClaimOwner);
+            Proofs::<T>::remove(&claim);
+            Self::deposit_event(Event::ClaimRevoked(sender, claim.into()));
+            Ok(().into())
+        }
+
+        // 转移存证
+        #[pallet::call_index(2)]
+        #[pallet::weight(T::WeightInfo::transfer_claim())]
+        pub fn transfer_claim(
+            origin: OriginFor<T>,
+            claim: BoundedVec<u8, T::MaxClaimLength>,
+            target: T::AccountId,
+        ) -> DispatchResult {
+            // 调用签名验证
+            let sender = ensure_signed(origin)?;
+            let (owner, _) = Proofs::<T>::get(&claim).ok_or(Error::<T>::ClaimNotExist)?;
+            ensure!(owner == sender, Error::<T>::NotClaimOwner);
+
+            Proofs::<T>::remove(&claim);
+            Self::deposit_event(Event::ClaimRevoked(sender, claim.clone()));
+            Proofs::<T>::insert(
+                &claim,
+                (target.clone(), frame_system::Pallet::<T>::block_number()),
+            );
+            Self::deposit_event(Event::ClaimCreated(target, claim.into()));
+
+            Ok(().into())
         }
     }
 }
